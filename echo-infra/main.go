@@ -14,6 +14,9 @@ func main() {
 		}
 
 		_, err := appsv1.NewDeployment(ctx, "echo-service", &appsv1.DeploymentArgs{
+			Metadata: &metav1.ObjectMetaArgs{
+				Name: pulumi.String("echo-service"),
+			},
 			Spec: appsv1.DeploymentSpecArgs{
 				Selector: &metav1.LabelSelectorArgs{
 					MatchLabels: appLabels,

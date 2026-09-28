@@ -7,6 +7,8 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    env:
+      PULUMI_CONFIG_PASSPHRASE: ""
     steps:
       - uses: actions/checkout@v4
 
@@ -21,3 +23,24 @@ jobs:
 
       - name: Run CI script
         run: ./scripts/ci.sh
+
+      - name: Install Pulumi
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy with Pulumi
+        working-directory: echo-infra
+        run: |
+          pulumi login --local
+          pulumi stack init dev
+          pulumi up --yes
+
+      - name: Smoke test
+        run: |
+          kubectl port-forward svc/echo-service 8888:80 &
+          for i in $(seq 1 10); do curl -s -o /dev/null localhost:8888 && break; sleep 1; done
+          curl -sf -X POST "http://localhost:8888/hello?x=1" \
+            -H "X-Test: value" -H "Content-Type: application/json" -d '{"k":"v"}' \
+            | tee /dev/stderr \
+            | jq -e '.Path == "/hello" and .Params.x == ["1"] and .Body == "{\"k\":\"v\"}" and .Headers["X-Test"] == ["value"]'

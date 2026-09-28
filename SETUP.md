@@ -20,7 +20,7 @@ kind create cluster --name echo-cluster
 ./scripts/ci.sh
 ```
 
-This runs the Go unit tests, builds the `echo-service:latest` Docker image, and loads it into the `echo-cluster` Kind cluster (`kind load docker-image`), so it's available without a registry.
+This runs the Go unit tests, builds the `echo-service:latest` Docker image, and loads it into the `echo-cluster` Kind cluster (`kind load docker-image`), so it's available without a registry. `kind load` was chosen over a local registry to keep the setup to one cluster and no extra containers or containerd config.
 
 ## 3. Deploy with Pulumi
 
@@ -39,15 +39,18 @@ This creates a `Deployment` and a `Service` (`echo-service`, ClusterIP, port 80 
 ## 4. Try it
 
 ```
-kubectl port-forward svc/echo-service 8888:80
-curl -X POST "http://localhost:8888/hello?x=1" -H "X-Test: value" -d '{"k":"v"}'
+kubectl port-forward svc/echo-service 8888:80   # blocks; run the curl in a second terminal
+curl -X POST "http://localhost:8888/hello?x=1" -H "X-Test: value" -H "Content-Type: application/json" -d '{"k":"v"}'
 ```
 
 Returns a JSON body with `Headers`, `Params`, `Body`, and `Path`.
 
 ## Teardown
 
+From the repo root:
+
 ```
+export PULUMI_CONFIG_PASSPHRASE=""   # if this is a new shell
 cd echo-infra && pulumi destroy
 kind delete cluster --name echo-cluster
 ```
