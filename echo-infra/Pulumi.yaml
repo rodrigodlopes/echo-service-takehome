@@ -1,0 +1,7 @@
+name: echo-infra
+description: Echo service k8s infra
+runtime: go
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: kubernetes-go
